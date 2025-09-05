@@ -1,0 +1,4 @@
+import {V,sub,len,norm} from '../util/Math2D.js';
+const TILE=32;
+export function circleVsTiles(e,level){const minX=Math.floor((e.pos.x-e.radius)/TILE),maxX=Math.floor((e.pos.x+e.radius)/TILE);const minY=Math.floor((e.pos.y-e.radius)/TILE),maxY=Math.floor((e.pos.y+e.radius)/TILE);for(let y=minY;y<=maxY;y++)for(let x=minX;x<=maxX;x++){if(level.isWall(x,y)){const left=x*TILE,right=left+TILE,top=y*TILE,bottom=top+TILE;if(e.pos.x<left)e.pos.x=left-e.radius;if(e.pos.x>right)e.pos.x=right+e.radius;if(e.pos.y<top)e.pos.y=top-e.radius;if(e.pos.y>bottom)e.pos.y=bottom+e.radius;}}}
+export function circleVsCircle(a,b){const d=sub(a.pos,b.pos);const dist=len(d);const overlap=a.radius+b.radius-dist;if(overlap>0){const n=norm(d);a.pos.x+=n.x*overlap/2;a.pos.y+=n.y*overlap/2;b.pos.x-=n.x*overlap/2;b.pos.y-=n.y*overlap/2;return true;}return false;}
