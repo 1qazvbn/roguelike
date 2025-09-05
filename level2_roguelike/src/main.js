@@ -59,7 +59,11 @@ function render(){ctx.clearRect(0,0,canvas.width,canvas.height);if(state==='menu
 function drawTiles(){const TILE=32;for(let y=0;y<level.height;y++)for(let x=0;x<level.width;x++){const t=level.tiles[y*level.width+x];ctx.fillStyle=t?"#222":"#444";ctx.fillRect(x*TILE,y*TILE,TILE,TILE);}ctx.fillStyle='blue';const s=level.stairPos;ctx.fillRect(s.x-8,s.y-8,16,16);}
 function drawEntities(){for(const e of entities){if(e===player){ctx.fillStyle='white';ctx.beginPath();ctx.arc(e.pos.x,e.pos.y,e.radius,0,Math.PI*2);ctx.fill();}else if(e.kind==='enemy'){ctx.fillStyle=e.type==='chaser'?"red":"orange";ctx.beginPath();ctx.arc(e.pos.x,e.pos.y,e.radius,0,Math.PI*2);ctx.fill();}else if(e.kind==='projectile'){ctx.fillStyle=e.team===1?"#0ff":"#f0f";ctx.beginPath();ctx.arc(e.pos.x,e.pos.y,e.radius,0,Math.PI*2);ctx.fill();}else if(e.kind==='item'){ctx.fillStyle=e.item==='medkit'?"#0f0":"#ff0";ctx.fillRect(e.pos.x-8,e.pos.y-8,16,16);}}}
 
-function drawCursor(ctx,pos){ctx.save();ctx.translate(pos.x,pos.y);ctx.strokeStyle='red';ctx.fillStyle='red';ctx.beginPath();ctx.arc(0,0,3,0,Math.PI*2);ctx.stroke();ctx.fillRect(-2,-0.5,2,1);ctx.fillRect(1,-0.5,2,1);ctx.fillRect(-0.5,-2,1,2);ctx.fillRect(-0.5,1,1,2);ctx.restore();}
+function drawCursor(ctx,pos){
+  if(!pos)return;
+  if(!drawCursor.img){const off=document.createElement('canvas');off.width=off.height=5;const ictx=off.getContext('2d');const id=ictx.createImageData(5,5);function px(x,y,a=255){const i=(y*5+x)*4;id.data[i]=255;id.data[i+1]=0;id.data[i+2]=0;id.data[i+3]=a;}const dots=[[2,0],[3,1],[4,2],[3,3],[2,4],[1,3],[0,2],[1,1]];dots.forEach(([x,y])=>px(x,y));for(let x=0;x<5;x++)if(x!==2)px(x,2);for(let y=0;y<5;y++)if(y!==2)px(2,y);ictx.putImageData(id,0,0);drawCursor.img=off;}
+  ctx.drawImage(drawCursor.img,Math.round(pos.x)-2,Math.round(pos.y)-2);
+}
 // menu buttons
 newBtn.onclick=()=>startNewRun(seedInput.value||undefined);
 contBtn.onclick=()=>startNewRun(lsGet('lastSeed')||undefined);
