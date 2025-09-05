@@ -36,7 +36,7 @@ const lsGet=k=>storage?storage.getItem(k):null;
 const lsSet=(k,v)=>{if(storage)try{storage.setItem(k,v);}catch{}};
 const input=new Input(canvas);
 let loop;let camera;let level;let player;let entities=[];let rng;let state='menu';let depth=1;let seedStr='';let fps=60, lastFps=0, fpsAccum=0, fpsCount=0;let debug=false;
-function start(seed){seedStr=seed;rng=new RNG(hashSeed(seed));depth=1;menu.classList.add('hidden');initLevel();state='play';loop.start();}
+function start(seed){seedStr=seed;rng=new RNG(hashSeed(seed));depth=1;menu.classList.add('hidden');initLevel();state='play';if(!loop)loop=new Loop(update,render);loop.start();}
 function initLevel(){
   const data=generateDungeon(rng,64,64);
   level=new Level(data);
@@ -60,5 +60,4 @@ resumeBtn.onclick=()=>{state='play';pauseEl.classList.add('hidden');};
 restartBtn.onclick=()=>{pauseEl.classList.add('hidden');state='play';initLevel();};
 exitBtn.onclick=()=>{pauseEl.classList.add('hidden');menu.classList.remove('hidden');state='menu';loop.stop();};
 window.addEventListener('keydown',e=>{if(e.code==='F1')debug=!debug;});
-loop=new Loop(update,render);
 if(new URLSearchParams(location.search).get('seed')){seedInput.value=new URLSearchParams(location.search).get('seed');}
