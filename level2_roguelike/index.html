@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Level2 Roguelike</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <canvas id="game" width="800" height="576"></canvas>
+  <div id="menu" class="overlay">
+    <h1>Level2 Roguelike</h1>
+    <label>Seed: <input id="seedInput"></label>
+    <div class="buttons">
+      <button id="newRun">New Run</button>
+      <button id="continueRun">Continue</button>
+    </div>
+  </div>
+  <div id="pause" class="overlay hidden">
+    <div class="buttons">
+      <button id="resume">Resume</button>
+      <button id="restart">Restart Floor</button>
+      <button id="exit">Exit to Menu</button>
+    </div>
+  </div>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
