@@ -14,50 +14,57 @@ import {drawHUD} from './ui/HUD.js';
 import {PauseMenu} from './ui/PauseMenu.js';
 import {VERSION} from './engine/Version.js';
 
-document.title=`Roguelike v${VERSION}`;
+document.title = `Roguelike v${VERSION}`;
 
-const canvas=document.getElementById('game');
-const ctx=canvas.getContext('2d');
+const canvas = document.getElementById('game');
+const ctx    = canvas.getContext('2d');
+const menu   = document.getElementById('menu');
+const seedInput = document.getElementById('seedInput');
+const newBtn = document.getElementById('newRun');
+const contBtn = document.getElementById('continueRun');
+const pauseEl = document.getElementById('pause');
+const resumeBtn = document.getElementById('resume');
+const restartBtn = document.getElementById('restart');
+const exitBtn = document.getElementById('exit');
+const input  = new Input(canvas);
+let loop = null;
+let camera = null;
+let level = null, player = null, entities = [];
+let rng = null, state = 'menu', depth = 1, seedStr = '';
+let fps = 60, lastFps = 0, fpsAccum = 0, fpsCount = 0, debug = false;
+
 function resizeCanvas(){
-  canvas.width=window.innerWidth;
-  canvas.height=window.innerHeight;
-  canvas.style.width=window.innerWidth+'px';
-  canvas.style.height=window.innerHeight+'px';
-  if(camera){camera.w=canvas.width;camera.h=canvas.height;}
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = canvas.clientWidth || 960;
+  const cssH = canvas.clientHeight || 540;
+  canvas.width  = Math.round(cssW * dpr);
+  canvas.height = Math.round(cssH * dpr);
+  ctx.setTransform(1,0,0,1,0,0);
+  if (camera) camera.resize(canvas.width, canvas.height);
 }
-window.addEventListener('resize',resizeCanvas);
+
+window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
-const menu=document.getElementById('menu');
-const pauseEl=document.getElementById('pause');
-const seedInput=document.getElementById('seedInput');
-const newBtn=document.getElementById('newRun');
-const contBtn=document.getElementById('continueRun');
-const resumeBtn=document.getElementById('resume');
-const restartBtn=document.getElementById('restart');
-const exitBtn=document.getElementById('exit');
-function showCanvas(){canvas.classList.remove('hidden');canvas.style.display='block';}
-function hideMenu(){menu.classList.add('hidden');}
-const pauseMenu=new PauseMenu(pauseEl);pauseMenu.bindNewRun(()=>start());
-const storage=(()=>{try{return window.localStorage;}catch{return null;}})();
-const lsGet=k=>storage?storage.getItem(k):null;
-const lsSet=(k,v)=>{if(storage)try{storage.setItem(k,v);}catch{}};
-const input=new Input(canvas);
-let loop,camera,level,player,entities=[],rng,state='menu';
-let depth=1,seedStr='';
-let fps=60,lastFps=0,fpsAccum=0,fpsCount=0;let debug=false;
+
+const pauseMenu = new PauseMenu(pauseEl); pauseMenu.bindNewRun(()=>start());
+const storage = (()=>{try{return window.localStorage;}catch{return null;}})();
+const lsGet = k=>storage?storage.getItem(k):null;
+const lsSet = (k,v)=>{if(storage)try{storage.setItem(k,v);}catch{}};
+
 function start(seed){
   if(!seed)seed=Math.random().toString(36).slice(2);
-  seedStr=seed;
-  if(loop)loop.stop();
+  seedStr = seed;
+  rng = new RNG(hashSeed(seed));
   entities=[];level=null;player=null;
-  depth=1;fps=60;fpsAccum=0;fpsCount=0;lastFps=0;
-  rng=new RNG(hashSeed(seed));
+  depth = 1;
+  fps=60;fpsAccum=0;fpsCount=0;lastFps=0;
+  menu.classList.add('hidden');
+  pauseMenu.hide();
   initLevel();
   input.keys.clear();
-  hideMenu();pauseMenu.hide();showCanvas();
   state='play';
-  loop=new Loop(update,render);
-  loop.start();
+  if(!loop) loop = new Loop(update,render);
+  if(!loop.running) loop.start();
 }
 function initLevel(){
   const data=generateDungeon(rng,64,64);
@@ -66,8 +73,6 @@ function initLevel(){
   entities=[player];
   spawnLevel(level,entities,rng,depth);
   camera=new Camera(canvas.width,canvas.height);
-  camera.pos.x=player.pos.x-camera.w/2;
-  camera.pos.y=player.pos.y-camera.h/2;
   resizeCanvas();
 }
 function nextLevel(){
