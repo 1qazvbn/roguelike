@@ -1,7 +1,7 @@
 import { V, lerp } from '../util/Math2D.js';
 /** Camera with soft follow and zoom */
 export class Camera {
-  constructor(w, h, zoom = 4) {
+  constructor(w, h, zoom = 2.5) {
     this.pos = V();
     this.zoom = zoom;
     this.resize(w, h);
