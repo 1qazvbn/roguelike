@@ -20,9 +20,9 @@ export class Input {
   }
   down(code) { return this.keys.has(code); }
   getMouseWorld(camera) {
-    return {
-      x: this.mouse.x + (camera?.pos.x || 0),
-      y: this.mouse.y + (camera?.pos.y || 0)
-    };
+    if (camera?.screenToWorld) {
+      return camera.screenToWorld(this.mouse);
+    }
+    return { x: this.mouse.x, y: this.mouse.y };
   }
 }

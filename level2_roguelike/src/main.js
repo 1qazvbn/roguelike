@@ -55,10 +55,11 @@ function start(seed){
   if(!seed)seed=Math.random().toString(36).slice(2);
   seedStr = seed;
   rng = new RNG(hashSeed(seed));
-  entities=[];level=null;player=null;
+  entities=[];level=null;player=null;camera=null;
   depth = 1;
   fps=60;fpsAccum=0;fpsCount=0;lastFps=0;
   menu.classList.add('hidden');
+  canvas.classList.remove('hidden');
   pauseMenu.hide();
   initLevel();
   input.keys.clear();
@@ -72,7 +73,7 @@ function initLevel(){
   player=createPlayer(data.playerSpawn.x,data.playerSpawn.y);
   entities=[player];
   spawnLevel(level,entities,rng,depth);
-  camera=new Camera(canvas.width,canvas.height);
+  camera=new Camera(canvas.width,canvas.height,5);
   resizeCanvas();
 }
 function nextLevel(){
@@ -103,18 +104,20 @@ function render(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
   if(state==='menu')return;
   ctx.save();
+  ctx.scale(camera.zoom,camera.zoom);
   ctx.translate(-camera.pos.x,-camera.pos.y);
   drawTiles();
   drawEntities();
+  if(player.crouch){
+    ctx.strokeStyle='yellow';
+    ctx.beginPath();
+    ctx.arc(player.pos.x,player.pos.y,player.radius,0,Math.PI*2);
+    ctx.stroke();
+  }
   ctx.restore();
   drawHUD(ctx,{player,depth,seed:seedStr,fps,entities,debug});
   drawMinimap(ctx,level,player);
   drawCursor(ctx,input.mouse);
-  if(player.crouch){
-    ctx.strokeStyle='yellow';ctx.beginPath();
-    ctx.arc(player.pos.x-camera.pos.x,player.pos.y-camera.pos.y,player.radius,0,Math.PI*2);
-    ctx.stroke();
-  }
 }
 function drawTiles(){
   const TILE=32;
