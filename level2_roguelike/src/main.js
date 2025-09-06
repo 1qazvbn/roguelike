@@ -75,7 +75,7 @@ function initLevel(){
   player=createPlayer(data.playerSpawn.x,data.playerSpawn.y);
   entities=[player];
   spawnLevel(level,entities,rng,depth);
-  camera=new Camera(canvas.width,canvas.height,4);
+  camera=new Camera(canvas.width,canvas.height,2.5);
   resizeCanvas();
 }
 function nextLevel(){
