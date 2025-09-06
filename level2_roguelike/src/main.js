@@ -16,6 +16,8 @@ import {VERSION} from './engine/Version.js';
 
 document.title = `Roguelike v${VERSION}`;
 
+const CROSSHAIR_BASE_SIZE = 5;
+
 const canvas = document.getElementById('game');
 const ctx    = canvas.getContext('2d');
 const menu   = document.getElementById('menu');
@@ -117,7 +119,7 @@ function render(){
   ctx.restore();
   drawHUD(ctx,{player,depth,seed:seedStr,fps,entities,debug});
   drawMinimap(ctx,level,player);
-  drawCursor(ctx,input.mouse);
+  drawCursor(ctx,input.mouse,camera);
 }
 function drawTiles(){
   const TILE=32;
@@ -147,7 +149,7 @@ function drawEntities(){
     }
   }
 }
-function drawCursor(ctx,pos){
+function drawCursor(ctx,pos,camera){
   if(!pos||typeof pos.x!=='number'||typeof pos.y!=='number')return;
   if(!drawCursor.img){
     const off=document.createElement('canvas');off.width=off.height=5;
@@ -158,7 +160,14 @@ function drawCursor(ctx,pos){
     for(let y=0;y<5;y++)if(y!==2)px(2,y);
     ictx.putImageData(id,0,0);drawCursor.img=off;
   }
-  ctx.drawImage(drawCursor.img,Math.round(pos.x)-2,Math.round(pos.y)-2);
+  const zoom=camera?.zoom||1;
+  const size=CROSSHAIR_BASE_SIZE*zoom;
+  const x=pos.x-size/2;
+  const y=pos.y-size/2;
+  const smoothing=ctx.imageSmoothingEnabled;
+  ctx.imageSmoothingEnabled=false;
+  ctx.drawImage(drawCursor.img,x,y,size,size);
+  ctx.imageSmoothingEnabled=smoothing;
 }
 newBtn.onclick=()=>{
   const s=(seedInput.value||Math.random().toString(36).slice(2));
