@@ -5,6 +5,7 @@ import {RNG,hashSeed} from './engine/RNG.js';
 import {generateDungeon} from './world/DungeonGen.js';
 import {Level} from './world/Level.js';
 import {drawMinimap} from './world/Minimap.js';
+import * as iso from './util/iso.js';
 import {spawnLevel} from './world/Spawns.js';
 import {createPlayer} from './entities/Player.js';
 import {physicsSystem} from './systems/PhysicsSystem.js';
@@ -71,7 +72,7 @@ function start(seed){
 }
 function initLevel(){
   const data=generateDungeon(rng,64,64);
-  level=new Level(data);
+  level=new Level(data,{renderMode:'isometric'});
   player=createPlayer(data.playerSpawn.x,data.playerSpawn.y);
   entities=[player];
   spawnLevel(level,entities,rng,depth);
@@ -107,14 +108,31 @@ function render(){
   if(state==='menu')return;
   ctx.save();
   ctx.scale(camera.zoom,camera.zoom);
-  ctx.translate(-camera.pos.x,-camera.pos.y);
-  drawTiles();
-  drawEntities();
-  if(player.crouch){
-    ctx.strokeStyle='yellow';
-    ctx.beginPath();
-    ctx.arc(player.pos.x,player.pos.y,player.radius,0,Math.PI*2);
-    ctx.stroke();
+  if(level.renderMode==='isometric'){
+    const camTileX=camera.pos.x/32;
+    const camTileY=camera.pos.y/32;
+    const camScreen=iso.gridToScreen(camTileX,camTileY,0);
+    const originX=-camScreen.x;
+    const originY=-camScreen.y;
+    drawTilesIso(originX,originY);
+    drawEntitiesIso(originX,originY);
+    if(player.crouch){
+      const p=iso.gridToScreen(player.pos.x/32,player.pos.y/32,0,originX,originY);
+      ctx.strokeStyle='yellow';
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,player.radius,0,Math.PI*2);
+      ctx.stroke();
+    }
+  }else{
+    ctx.translate(-camera.pos.x,-camera.pos.y);
+    drawTiles();
+    drawEntities();
+    if(player.crouch){
+      ctx.strokeStyle='yellow';
+      ctx.beginPath();
+      ctx.arc(player.pos.x,player.pos.y,player.radius,0,Math.PI*2);
+      ctx.stroke();
+    }
   }
   ctx.restore();
   drawHUD(ctx,{player,depth,seed:seedStr,fps,entities,debug});
@@ -132,6 +150,39 @@ function drawTiles(){
   const s=level.stairPos;
   ctx.fillRect(s.x-8,s.y-8,16,16);
 }
+function drawTilesIso(originX,originY){
+  const {tileW,tileH}=iso.isoConfig;
+  for(let k=0;k<level.width+level.height-1;k++){
+    for(let x=0;x<level.width;x++){
+      const y=k-x;
+      if(y<0||y>=level.height)continue;
+      const t=level.tiles[y*level.width+x];
+      const p=iso.gridToScreen(x,y,0,originX,originY);
+      ctx.fillStyle=t?"#222":"#444";
+      ctx.beginPath();
+      ctx.moveTo(p.x,p.y-tileH/2);
+      ctx.lineTo(p.x+tileW/2,p.y);
+      ctx.lineTo(p.x,p.y+tileH/2);
+      ctx.lineTo(p.x-tileW/2,p.y);
+      ctx.closePath();
+      ctx.fill();
+      if(t){
+        ctx.fillStyle="#111";
+        ctx.fillRect(p.x-tileW/2,p.y-tileH/2,tileW,tileH/2);
+      }
+    }
+  }
+  const s=level.stairPos;
+  const sp=iso.gridToScreen(s.x/32,s.y/32,0,originX,originY);
+  ctx.fillStyle='blue';
+  ctx.beginPath();
+  ctx.moveTo(sp.x,sp.y-tileH/2);
+  ctx.lineTo(sp.x+tileW/2,sp.y);
+  ctx.lineTo(sp.x,sp.y+tileH/2);
+  ctx.lineTo(sp.x-tileW/2,sp.y);
+  ctx.closePath();
+  ctx.fill();
+}
 function drawEntities(){
   for(const e of entities){
     if(e===player){
@@ -146,6 +197,30 @@ function drawEntities(){
     }else if(e.kind==='item'){
       ctx.fillStyle=e.item==='medkit'?"#0f0":"#ff0";
       ctx.fillRect(e.pos.x-8,e.pos.y-8,16,16);
+    }
+  }
+}
+function drawEntitiesIso(originX,originY){
+  const list=[...entities];
+  list.sort((a,b)=>{
+    const pa=iso.gridToScreen(a.pos.x/32,a.pos.y/32,0,originX,originY);
+    const pb=iso.gridToScreen(b.pos.x/32,b.pos.y/32,0,originX,originY);
+    return pa.y-pb.y;
+  });
+  for(const e of list){
+    const p=iso.gridToScreen(e.pos.x/32,e.pos.y/32,0,originX,originY);
+    if(e===player){
+      ctx.fillStyle='white';ctx.beginPath();
+      ctx.arc(p.x,p.y,e.radius,0,Math.PI*2);ctx.fill();
+    }else if(e.kind==='enemy'){
+      ctx.fillStyle=e.type==='chaser'?"red":"orange";
+      ctx.beginPath();ctx.arc(p.x,p.y,e.radius,0,Math.PI*2);ctx.fill();
+    }else if(e.kind==='projectile'){
+      ctx.fillStyle=e.team===1?"#0ff":"#f0f";
+      ctx.beginPath();ctx.arc(p.x,p.y,e.radius,0,Math.PI*2);ctx.fill();
+    }else if(e.kind==='item'){
+      ctx.fillStyle=e.item==='medkit'?"#0f0":"#ff0";
+      ctx.fillRect(p.x-8,p.y-8,16,16);
     }
   }
 }
