@@ -9,7 +9,7 @@ export function combatSystem(state,dt){
   player.dashEnergy=Math.min(1,player.dashEnergy+dt*0.2);
   player.shot-=dt;
   player.dash-=dt;
-  const mw=input.getMouseWorld?input.getMouseWorld(camera):{x:(input.mouse?.x??player.pos.x)+(camera?.pos.x||0),y:(input.mouse?.y??player.pos.y)+(camera?.pos.y||0)};
+  const mw = input.getMouseWorld(camera);
   if(input.mouse?.down&&player.shot<=0){
     const a=Math.atan2(mw.y-player.pos.y,mw.x-player.pos.x);
     state.entities.push(createProjectile(player,player.pos.x,player.pos.y,a,200,player.team));
